@@ -1,0 +1,20 @@
+{
+    "description": "A FastAPI app with a single route (/hello) that returns 'Hello, World!'",
+    "technical_details": {
+        "file": "generated_code.py",
+        "code_locations": [
+            {
+                "start": 1,
+                "end": 5
+            }
+        ]
+    },
+    "usage": {
+        "input": "GET request to /hello",
+        "output": "{\"message\": \"Hello, World!\"}"
+    },
+    "technology_stack": [
+        "FastAPI",
+        "Python"
+    ]
+}

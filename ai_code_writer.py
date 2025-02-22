@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Union
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -14,8 +15,12 @@ class GeneratedCode(BaseModel):
     expected_input: str
     expected_output: str
     tech_stack: list[str]
-    start_line: int
-    end_line: int
+    code_locations: list[dict[str, int]] = [{"start": 1, "end": 1}]  # Added default value
+    
+    @property
+    def primary_location(self) -> dict[str, int]:
+        """Returns the first code location or a default if none exist"""
+        return self.code_locations[0] if self.code_locations else {"start": 1, "end": 1}
 
 # Initialize Groq model
 model = GroqModel(
@@ -33,8 +38,9 @@ code_generator = Agent(
         "2. Provide a description of what the code does\n"
         "3. Specify expected inputs and outputs\n"
         "4. List the technologies used\n"
-        "5. Calculate the line numbers where the code should be inserted\n"
-        "Return all information in a structured format."
+        "5. Specify code locations as a list of dictionaries, where each dictionary has 'start' and 'end' line numbers\n"
+        "   Format example: [{\"start\": 1, \"end\": 3}, {\"start\": 5, \"end\": 8}]\n"
+        "Return all information in a structured format matching the GeneratedCode model."
     ),
 )
 
@@ -53,38 +59,33 @@ def generate_files(prompt: str, code_filename: str = "generated_code.py"):
     with open(code_filename, "w") as f:
         f.write(result.data.code)
     
-    # Create the documentation file
-    doc_filename = f"{code_filename.rsplit('.', 1)[0]}.md"
+    # Create the JSON documentation file instead of MD
+    doc_filename = f"{code_filename.rsplit('.', 1)[0]}.json"
+    documentation = {
+        "description": result.data.description,
+        "technical_details": {
+            "file": code_filename,
+            "code_locations": result.data.code_locations
+        },
+        "usage": {
+            "input": result.data.expected_input,
+            "output": result.data.expected_output
+        },
+        "technology_stack": result.data.tech_stack
+    }
+    
     with open(doc_filename, "w") as f:
-        f.write(f"""# Code Documentation
-
-## Description
-{result.data.description}
-
-## Technical Details
-- File: {code_filename}
-- Code Location: Lines {result.data.start_line}-{result.data.end_line}
-
-## Usage
-### Input
-{result.data.expected_input}
-
-### Output
-{result.data.expected_output}
-
-## Technology Stack
-{chr(10).join([f"- {tech}" for tech in result.data.tech_stack])}
-""")
+        json.dump(documentation, f, indent=4)
 
     return result.data
 
 def main():
     # Example usage
-    prompt = "Create a python function such that given a string s, return the length of the longest substring without repeating characters."
+    prompt = "Create a fastapi app that has a route /hello that returns 'Hello, World!'"
     result = generate_files(prompt)
     print(f"Generated files with the following details:")
     print(f"Description: {result.description}")
-    print(f"Line numbers: {result.start_line}-{result.end_line}")
+    print(f"Code locations: {result.code_locations}")
 
 if __name__ == "__main__":
     main()
