@@ -58,11 +58,16 @@ code_agent = Agent(
     2. If the code needs additional imports or context, add them
     3. Return the fixed code and expected output
     4. If there's an error that can't be fixed, provide a clear error message
+    5. Add print statements or logging to show execution progress and results
+    6. Include a main block to make the code runnable from command line
 
     Return the results in the CodeResult format with:
     - output: Expected output or None if error
     - error: Error message if any
-    - fixed_code: The corrected code if fixable
+    - fixed_code: The corrected code if fixable, including:
+        * Clear print statements showing execution steps
+        * __main__ block for command line execution
+        * Status messages indicating success/failure
     """
 )
 
